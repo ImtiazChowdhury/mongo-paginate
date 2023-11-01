@@ -1,6 +1,6 @@
 {
   "name": "mongodb-paginate",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "mongodb aggregation with pagination library for efficient and fast aggregations",
   "main": "dist/index",
   "types": "dist/index",
