@@ -1,0 +1,21 @@
+{
+  "name": "mongodb-paginate",
+  "version": "0.1.0",
+  "description": "mongodb aggregation with pagination library for efficient and fast aggregations",
+  "main": "dist/index",
+  "types": "dist/index",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon src/index.ts"
+  },
+  "author": "Imtiaz Chowdhury",
+  "license": "ISC",
+  "dependencies": {
+    "@imtiazchowdhury/mongopool": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.10",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  }
+}
