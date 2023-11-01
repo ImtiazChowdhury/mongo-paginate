@@ -1,5 +1,7 @@
 # Mongodb Paginate
 
+Generate pagination data with mongodb aggregation and optimize aggregation performance.
+
 ## installation
 
 ```sh
@@ -82,7 +84,7 @@ const result = await paginate(
 
 the above query will generate a response similar to the following:
 
-```json
+```js
 {
     // pagination data from the facet stage after filtering
     "page": {
@@ -154,6 +156,7 @@ function Paginate(
     facet: FacetBucketQuery[]
 ) => Promise<mongoDB.Document>
 ```
+
 ```ts
 PaginationOptions {
     sort?: string;
