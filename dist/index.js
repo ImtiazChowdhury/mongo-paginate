@@ -89,8 +89,6 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
         aggregatePipeLine.push({ $facet: facetStage });
         let aggregateResult;
         if (typeof collection === "string") {
-            console.log(mongopool_1.default.url, mongopool_1.default.dbName);
-            console.log(yield db.collection("category").aggregate(aggregatePipeLine).toArray());
             aggregateResult = yield db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
         }
         else if (collection instanceof mongopool_1.mongoDB.Collection) {
@@ -100,7 +98,6 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
             aggregateResult = yield collection.aggregate(aggregatePipeLine, aggregateOptions).exec();
         }
         let result = aggregateResult[0];
-        console.log({ result, t: typeof collection });
         if (!result || !result["page"] || !result["page"][0])
             return { page: {}, data: [] };
         if (fetchAll == 1)
