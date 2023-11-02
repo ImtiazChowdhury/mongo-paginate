@@ -3,7 +3,6 @@ import { Paginate, PaginatePageInfo } from "./types/types";
 
 const paginate: Paginate = async function (collection, prePagingStage, postPagingStage, options, facet, aggregateOptions) {
 
-    let db = await dbConnection.getDB();
 
     let { sort: sortOption, page: pageOption, limit: limitOption, sortOrder = -1, fetchAll } = options;
 
@@ -72,6 +71,7 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
     let aggregateResult: mongoDB.Document[];
 
     if (typeof collection === "string") {
+        let db = await dbConnection.getDB();
         aggregateResult = await db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
     } else if (collection instanceof mongoDB.Collection) {
         aggregateResult = await collection.aggregate(aggregatePipeLine, aggregateOptions).toArray()
@@ -85,7 +85,7 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
 
 
     if (fetchAll == 1) limit = result["data"].length;
-    
+
     const totalIndex = result["page"][0].totalIndex;
     const totalPage = Math.ceil(totalIndex / limit);
     const startingIndex = limit * (page - 1) + 1;
@@ -102,7 +102,7 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
         sort: sort,
         sortOrder: sortOrder
     }
-    
+
 
 
     delete result["page"]

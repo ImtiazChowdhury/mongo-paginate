@@ -38,7 +38,6 @@ exports.dbConnection = mongopool_1.default;
 Object.defineProperty(exports, "mongoDB", { enumerable: true, get: function () { return mongopool_1.mongoDB; } });
 const paginate = function (collection, prePagingStage, postPagingStage, options, facet, aggregateOptions) {
     return __awaiter(this, void 0, void 0, function* () {
-        let db = yield mongopool_1.default.getDB();
         let { sort: sortOption, page: pageOption, limit: limitOption, sortOrder = -1, fetchAll } = options;
         //defaults
         let sort;
@@ -89,6 +88,7 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
         aggregatePipeLine.push({ $facet: facetStage });
         let aggregateResult;
         if (typeof collection === "string") {
+            let db = yield mongopool_1.default.getDB();
             aggregateResult = yield db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
         }
         else if (collection instanceof mongopool_1.mongoDB.Collection) {
