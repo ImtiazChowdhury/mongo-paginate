@@ -89,6 +89,8 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
         aggregatePipeLine.push({ $facet: facetStage });
         let aggregateResult;
         if (typeof collection === "string") {
+            console.log(mongopool_1.default.url, mongopool_1.default.dbName);
+            console.log(yield db.collection("category").aggregate(aggregatePipeLine).toArray());
             aggregateResult = yield db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
         }
         else if (collection instanceof mongopool_1.mongoDB.Collection) {
@@ -98,23 +100,29 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
             aggregateResult = yield collection.aggregate(aggregatePipeLine, aggregateOptions).exec();
         }
         let result = aggregateResult[0];
+        console.log({ result, t: typeof collection });
         if (!result || !result["page"] || !result["page"][0])
             return { page: {}, data: [] };
-        let pageInfo = result["page"][0];
         if (fetchAll == 1)
             limit = result["data"].length;
-        pageInfo.totalPage = Math.ceil(pageInfo.totalIndex / limit);
-        pageInfo.currentPage = page;
-        pageInfo.nextPage = pageInfo.totalPage > page ? page + 1 : null;
-        pageInfo.previousPage = page > 1 ? page - 1 : null;
-        pageInfo.startingIndex = limit * (page - 1) + 1;
-        pageInfo.endingIndex = pageInfo.startingIndex + result["data"].length - 1;
-        pageInfo.itemsOnCurrentPage = result["data"].length;
-        pageInfo.limit = limit;
-        pageInfo.sort = sort;
-        pageInfo.sortOrder = sortOrder;
+        const totalIndex = result["page"][0].totalIndex;
+        const totalPage = Math.ceil(totalIndex / limit);
+        const startingIndex = limit * (page - 1) + 1;
+        const pageInfo = {
+            totalIndex,
+            totalPage,
+            currentPage: page,
+            nextPage: totalPage > page ? page + 1 : null,
+            previousPage: page > 1 ? page - 1 : null,
+            startingIndex,
+            endingIndex: startingIndex + result["data"].length - 1,
+            itemsOnCurrentPage: result["data"].length,
+            limit: limit,
+            sort: sort,
+            sortOrder: sortOrder
+        };
         delete result["page"];
-        return Object.assign({ page: pageInfo }, result);
+        return Object.assign({ page: pageInfo, data: result["data"] }, result);
     });
 };
 exports.default = paginate;

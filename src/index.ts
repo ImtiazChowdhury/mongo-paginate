@@ -1,5 +1,5 @@
-import dbConnection, { mongoDB } from "@imtiazchowdhury/mongopool"
-import { Paginate } from "./types/types";
+import dbConnection, { mongoDB } from "@imtiazchowdhury/mongopool";
+import { Paginate, PaginatePageInfo } from "./types/types";
 
 const paginate: Paginate = async function (collection, prePagingStage, postPagingStage, options, facet, aggregateOptions) {
 
@@ -80,28 +80,35 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
     }
 
     let result = aggregateResult[0];
+
     if (!result || !result["page"] || !result["page"][0]) return { page: {}, data: [] };
 
-    let pageInfo = result["page"][0];
 
     if (fetchAll == 1) limit = result["data"].length;
+    
+    const totalIndex = result["page"][0].totalIndex;
+    const totalPage = Math.ceil(totalIndex / limit);
+    const startingIndex = limit * (page - 1) + 1;
+    const pageInfo: PaginatePageInfo = {
+        totalIndex,
+        totalPage,
+        currentPage: page,
+        nextPage: totalPage > page ? page + 1 : null,
+        previousPage: page > 1 ? page - 1 : null,
+        startingIndex,
+        endingIndex: startingIndex + result["data"].length - 1,
+        itemsOnCurrentPage: result["data"].length,
+        limit: limit,
+        sort: sort,
+        sortOrder: sortOrder
+    }
+    
 
-    pageInfo.totalPage = Math.ceil(pageInfo.totalIndex / limit);
-    pageInfo.currentPage = page;
-    pageInfo.nextPage = pageInfo.totalPage > page ? page + 1 : null;
-    pageInfo.previousPage = page > 1 ? page - 1 : null;
-
-    pageInfo.startingIndex = limit * (page - 1) + 1;
-    pageInfo.endingIndex = pageInfo.startingIndex + result["data"].length - 1;
-    pageInfo.itemsOnCurrentPage = result["data"].length;
-
-    pageInfo.limit = limit;
-    pageInfo.sort = sort;
-    pageInfo.sortOrder = sortOrder;
 
     delete result["page"]
     return {
         page: pageInfo,
+        data: result["data"],
         ...result
     };
 };
@@ -111,4 +118,5 @@ export default paginate;
 export {
     dbConnection,
     mongoDB
-}
+};
+
