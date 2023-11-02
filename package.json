@@ -11,7 +11,7 @@
   "author": "Imtiaz Chowdhury",
   "license": "ISC",
   "dependencies": {
-    "@imtiazchowdhury/mongopool": "^1.4.0",
+    "@imtiazchowdhury/mongopool": "^1.5.1",
     "mongoose": "^8.0.0"
   },
   "devDependencies": {

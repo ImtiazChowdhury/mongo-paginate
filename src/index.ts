@@ -70,7 +70,7 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
 
 
     let aggregateResult: mongoDB.Document[];
-    
+
     if (typeof collection === "string") {
         aggregateResult = await db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
     } else if (collection instanceof mongoDB.Collection) {

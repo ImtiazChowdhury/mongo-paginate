@@ -36,10 +36,10 @@ exports.mongoDB = exports.dbConnection = void 0;
 const mongopool_1 = __importStar(require("@imtiazchowdhury/mongopool"));
 exports.dbConnection = mongopool_1.default;
 Object.defineProperty(exports, "mongoDB", { enumerable: true, get: function () { return mongopool_1.mongoDB; } });
-const paginate = function (collection, prePagingStage, postPagingStage, options, facet) {
+const paginate = function (collection, prePagingStage, postPagingStage, options, facet, aggregateOptions) {
     return __awaiter(this, void 0, void 0, function* () {
         let db = yield mongopool_1.default.getDB();
-        let { sort: sortOption, page: pageOption, limit: limitOption, sortOrder, fetchAll } = options;
+        let { sort: sortOption, page: pageOption, limit: limitOption, sortOrder = -1, fetchAll } = options;
         //defaults
         let sort;
         if (sortOption && typeof sortOption == "string") {
@@ -48,17 +48,11 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
         else {
             sort = 'createdDate'; //default sort by serial;
         }
-        if (sortOrder === 1) {
-            sortOrder = 1;
-        }
-        else
-            sortOrder = -1; //default 1
         let limit = (limitOption && isFinite(limitOption) && limitOption > 0) ? limitOption : 50; //default limit is 50
         let page = pageOption && isFinite(pageOption) ? pageOption : 1; //default first page
-        let aggregatePipeLine = [];
+        const aggregatePipeLine = [];
         aggregatePipeLine.push(...prePagingStage);
-        //sort, skip, limit
-        let sortStage = [
+        const sortStage = [
             { $sort: { [sort]: sortOrder, _id: 1 } }
         ];
         const pagingStage = [];
@@ -74,7 +68,7 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
         let groupIndex = 0;
         // get the last index of $group
         postPagingStage.forEach((item, index) => {
-            if (item['$group'] || item['$replaceRoot'])
+            if ("$group" in item || "$replaceRoot" in item)
                 groupIndex = index;
         });
         postPagingStage.splice(groupIndex + 1, 0, ...sortStage);
@@ -93,7 +87,16 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
             }
         }
         aggregatePipeLine.push({ $facet: facetStage });
-        let aggregateResult = yield db.collection(collection).aggregate(aggregatePipeLine).toArray();
+        let aggregateResult;
+        if (typeof collection === "string") {
+            aggregateResult = yield db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
+        }
+        else if (collection instanceof mongopool_1.mongoDB.Collection) {
+            aggregateResult = yield collection.aggregate(aggregatePipeLine, aggregateOptions).toArray();
+        }
+        else {
+            aggregateResult = yield collection.aggregate(aggregatePipeLine, aggregateOptions).exec();
+        }
         let result = aggregateResult[0];
         if (!result || !result["page"] || !result["page"][0])
             return { page: {}, data: [] };
