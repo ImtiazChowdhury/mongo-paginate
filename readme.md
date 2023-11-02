@@ -1,6 +1,6 @@
 # Mongodb Paginate
 
-Generate pagination data with mongodb aggregation and optimize aggregation performance.
+Generate pagination data with raw mongodb/mongoose aggregation and optimize aggregation performance.
 
 ## installation
 
@@ -24,10 +24,15 @@ only happens to the minimum number of documents possible.
 
 ## Usage
 
+can be used with raw mongodb connection, by passing mongodb collection or by passing mongoose model
+
+### raw mongodb with collection name as string
+
 ```js
 
 import paginate, { dbConnection } from "mongodb-paginate";
 
+// only required if working with raw mongodb and passed collection name as string, not required for mongoose or if passed collection instance
 dbConnection.url = "mongodb://127.0.0.1:27017" // YOUR DATABASE URL
 dbConnection.dbName = "DB_NAME" //YOUR DATABASE NAME
 
@@ -71,7 +76,122 @@ facet.push({
 const pagingOptions = { page: 2, limit: 1 };
 
 const result = await paginate(
-    "product", 
+    "product",  //pass collection name/collection instance for raw mongodb, pass model for mongoose 
+    prePagingStage, 
+    postPagingStage, 
+    pagingOptions
+    facet
+);
+
+...
+
+```
+
+### raw mongodb with collection instance
+
+```js
+
+import paginate, { dbConnection } from "mongodb-paginate";
+
+...
+
+const prePagingStage = [], postPagingStage = [], facet = [];
+
+//filter
+prePagingStage.push(...[
+    {
+        $match: {
+            featured: true
+        }
+    }
+])
+
+//populate
+postPagingStage.push({
+    $lookup: {
+        from: "category",
+        localField: "category",
+        foreignField: "_id",
+        as: "category"
+    }
+})
+
+//custom facet queries if needed
+facet.push({
+    key: "categoryWiseCount",
+    query: [
+        { $unwind: "$category" },
+        {
+            $group: {
+                _id: "$category",
+                count: { $sum: 1 },
+            }
+        }
+    ]
+})
+
+const pagingOptions = { page: 2, limit: 1 };
+
+const result = await paginate(
+    productCollection,  //pass collection name/collection instance for raw mongodb, pass model for mongoose 
+    prePagingStage, 
+    postPagingStage, 
+    pagingOptions
+    facet
+);
+
+...
+
+```
+
+
+### Mongoose
+
+```js
+
+import paginate, { dbConnection } from "mongodb-paginate";
+
+...
+
+const prePagingStage = [], postPagingStage = [], facet = [];
+
+//filter
+prePagingStage.push(...[
+    {
+        $match: {
+            featured: true
+        }
+    }
+])
+
+//populate
+postPagingStage.push({
+    $lookup: {
+        from: "category",
+        localField: "category",
+        foreignField: "_id",
+        as: "category"
+    }
+})
+
+//custom facet queries if needed
+facet.push({
+    key: "categoryWiseCount",
+    query: [
+        { $unwind: "$category" },
+        {
+            $group: {
+                _id: "$category",
+                count: { $sum: 1 },
+            }
+        }
+    ]
+})
+
+const pagingOptions = { page: 2, limit: 1 };
+
+const result = await paginate(
+    ProductModel,  //pass collection name/collection instance for raw mongodb, pass model for mongoose 
     prePagingStage, 
     postPagingStage, 
     pagingOptions
@@ -106,7 +226,8 @@ the above query will generate a response similar to the following:
         {
             "_id": "64ef2b99e399e2df52fc7c2c",
             "title": "Motorized treadmill 2.0hp with free massager - Walking Stick - gym equipment",
-            "category": [
+            
+            "category": [ //populated from the post-paging stage
                 {
                     "_id": "64eee55cbe86262266b88871",
                     "title": "Treadmills",
@@ -114,6 +235,7 @@ the above query will generate a response similar to the following:
                     "lastUpdatedDate": "2023-10-14T08:14:28.861Z",
                 }
             ],
+            
             "price": {
                 "regular": 42000,
                 "offer": 34500
@@ -148,42 +270,43 @@ the above query will generate a response similar to the following:
 ## Types
 
 ```ts
-function Paginate(
-    collection: string, 
-    prePagingState: mongoDB.Document[], 
-    postPagingStage: mongoDB.Document[], 
-    options: PaginationOptions, 
-    facet: FacetBucketQuery[]
+function Paginate = (
+    collection: string | mongoose.Model<mongoDB.Document> | mongoDB.Collection,
+    prePagingState: PipelineStage[],
+    postPagingStage: PipelineStage[],
+    options: PaginationOptions,
+    facet?: FacetBucketQuery[],
+    aggregateOptions?: mongoDB.AggregateOptions
 ) => Promise<mongoDB.Document>
 ```
 
 ```ts
-PaginationOptions {
-    sort?: string;
-    page?: number;
-    limit?: number;
-    sortOrder?: 1 | -1;
-    fetchAll?: 1 | 0;
+interface PaginationOptions {
+    sort?: string,
+    page?: number,
+    limit?: number,
+    sortOrder?: 1 | -1,
+    fetchAll?: 1 | 0
 }
 
-PaginateResult {
+interface PaginateResult {
     page: {
-        totalPage: number;
-        currentPage: number;
-        nextPage: number;
-        previousPage: number;
-        startingIndex: number;
-        endingIndex: number;
-        itemsOnCurrentPage: number;
-        limit: number;
-        sort: string;
-        sortOrder: number;
-    };
-    data: mongoDB.Document[];
+        totalPage: number,
+        currentPage: number,
+        nextPage: number,
+        previousPage: number,
+        startingIndex: number,
+        endingIndex: number,
+        itemsOnCurrentPage: number,
+        limit: number,
+        sort: string,
+        sortOrder: 1 | -1,
+    },
+    data: mongoDB.Document[]
 }
 
-FacetBucketQuery {
-    key: string;
-    query: mongoDB.Document[];
+interface FacetBucketQuery {
+    key: string,
+    query: mongoDB.Document[]
 }
 ```

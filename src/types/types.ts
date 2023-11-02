@@ -1,4 +1,5 @@
 import { mongoDB } from "@imtiazchowdhury/mongopool"
+import mongoose, { PipelineStage } from "mongoose"
 
 export interface PaginationOptions {
     sort?: string,
@@ -19,7 +20,7 @@ export interface PaginateResult {
         itemsOnCurrentPage: number,
         limit: number,
         sort: string,
-        sortOrder: number,
+        sortOrder: 1 | -1,
     },
     data: mongoDB.Document[]
 }
@@ -31,10 +32,11 @@ export interface FacetBucketQuery {
 }
 
 export type Paginate = (
-    collection: string,
-    prePagingState: mongoDB.Document[],
-    postPagingStage: mongoDB.Document[],
+    collection: string | mongoose.Model<mongoDB.Document> | mongoDB.Collection,
+    prePagingState: PipelineStage[],
+    postPagingStage: PipelineStage[],
     options: PaginationOptions,
-    facet: FacetBucketQuery[]
+    facet?: FacetBucketQuery[],
+    aggregateOptions?: mongoDB.AggregateOptions
 ) => Promise<mongoDB.Document>
 

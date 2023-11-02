@@ -1,11 +1,11 @@
 import dbConnection, { mongoDB } from "@imtiazchowdhury/mongopool"
 import { Paginate } from "./types/types";
 
-const paginate: Paginate = async function (collection, prePagingStage, postPagingStage, options, facet) {
+const paginate: Paginate = async function (collection, prePagingStage, postPagingStage, options, facet, aggregateOptions) {
 
     let db = await dbConnection.getDB();
 
-    let { sort: sortOption, page: pageOption, limit: limitOption, sortOrder, fetchAll } = options;
+    let { sort: sortOption, page: pageOption, limit: limitOption, sortOrder = -1, fetchAll } = options;
 
     //defaults
     let sort: string;
@@ -15,19 +15,17 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
         sort = 'createdDate'; //default sort by serial;
     }
 
-    if (sortOrder === 1) {
-        sortOrder = 1;
-    } else sortOrder = -1; //default 1
 
     let limit = (limitOption && isFinite(limitOption) && limitOption > 0) ? limitOption : 50; //default limit is 50
     let page = pageOption && isFinite(pageOption) ? pageOption : 1; //default first page
 
 
-    let aggregatePipeLine = [];
+    const aggregatePipeLine = [];
     aggregatePipeLine.push(...prePagingStage);
 
     //sort, skip, limit
-    let sortStage = [
+    type SortStage = { $sort: { [index: string]: 1 | -1, _id: 1 } }[]
+    const sortStage: SortStage = [
         { $sort: { [sort]: sortOrder, _id: 1 } }
     ]
 
@@ -49,7 +47,7 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
 
     // get the last index of $group
     postPagingStage.forEach((item, index) => {
-        if (item['$group'] || item['$replaceRoot']) groupIndex = index;
+        if ("$group" in item || "$replaceRoot" in item) groupIndex = index;
     })
     postPagingStage.splice(groupIndex + 1, 0, ...sortStage);
 
@@ -71,8 +69,15 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
     aggregatePipeLine.push({ $facet: facetStage });
 
 
-
-    let aggregateResult = await db.collection(collection).aggregate(aggregatePipeLine).toArray();
+    let aggregateResult: mongoDB.Document[];
+    
+    if (typeof collection === "string") {
+        aggregateResult = await db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
+    } else if (collection instanceof mongoDB.Collection) {
+        aggregateResult = await collection.aggregate(aggregatePipeLine, aggregateOptions).toArray()
+    } else {
+        aggregateResult = await collection.aggregate(aggregatePipeLine, aggregateOptions).exec()
+    }
 
     let result = aggregateResult[0];
     if (!result || !result["page"] || !result["page"][0]) return { page: {}, data: [] };
