@@ -55,4 +55,3 @@ export type Paginate = (
     facet?: FacetBucketQuery[],
     aggregateOptions?: mongoDB.AggregateOptions
 ) => Promise<PaginateResult | EmptyPaginateResult>
-

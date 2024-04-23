@@ -120,3 +120,6 @@ export {
     mongoDB
 };
 
+export type {PipelineStage} from "mongoose"
+export type {Document} from "mongodb"
+export type * from "./types/types";
