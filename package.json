@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@imtiazchowdhury/mongopool": "^1.5.1",
+    "mongodb": "^6.5.0",
     "mongoose": "^8.0.0"
   },
   "devDependencies": {

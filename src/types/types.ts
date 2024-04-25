@@ -1,5 +1,5 @@
 import { mongoDB } from "@imtiazchowdhury/mongopool"
-import mongoose, { PipelineStage } from "mongoose"
+import { PipelineStage } from "mongoose"
 
 export interface PaginationOptions {
     sort?: string,
@@ -48,7 +48,7 @@ export interface FacetBucketQuery {
 }
 
 export type Paginate = (
-    collection: string | mongoose.Model<mongoDB.Document> | mongoDB.Collection,
+    collection: any,
     prePagingState: PipelineStage[],
     postPagingStage: PipelineStage[],
     options: PaginationOptions,

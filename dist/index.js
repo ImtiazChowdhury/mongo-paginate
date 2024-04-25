@@ -31,11 +31,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mongoDB = exports.dbConnection = void 0;
-const mongopool_1 = __importStar(require("@imtiazchowdhury/mongopool"));
+exports.mongodb = exports.dbConnection = void 0;
+const mongopool_1 = __importDefault(require("@imtiazchowdhury/mongopool"));
 exports.dbConnection = mongopool_1.default;
-Object.defineProperty(exports, "mongoDB", { enumerable: true, get: function () { return mongopool_1.mongoDB; } });
+const mongodb = __importStar(require("mongodb"));
+exports.mongodb = mongodb;
 const paginate = function (collection, prePagingStage, postPagingStage, options, facet, aggregateOptions) {
     return __awaiter(this, void 0, void 0, function* () {
         let { sort: sortOption, page: pageOption, limit: limitOption, sortOrder = -1, fetchAll } = options;
@@ -87,15 +91,20 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
         }
         aggregatePipeLine.push({ $facet: facetStage });
         let aggregateResult;
+        console.log({ mongodb });
+        console.log({ a: collection instanceof mongodb.Collection });
         if (typeof collection === "string") {
             let db = yield mongopool_1.default.getDB();
             aggregateResult = yield db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
         }
-        else if (collection instanceof mongopool_1.mongoDB.Collection) {
+        else if (typeof collection.collectionName === "string" && typeof collection.aggregate === "function") { //mongodb
             aggregateResult = yield collection.aggregate(aggregatePipeLine, aggregateOptions).toArray();
         }
-        else {
+        else if (typeof collection.aggregate === "function") { //mongoose
             aggregateResult = yield collection.aggregate(aggregatePipeLine, aggregateOptions).exec();
+        }
+        else {
+            throw new Error("Invalid collection type provided");
         }
         let result = aggregateResult[0];
         if (!result || !result["page"] || !result["page"][0])

@@ -23,11 +23,12 @@
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose" />
 /// <reference types="mongoose/types/inferschematype" />
-import dbConnection, { mongoDB } from "@imtiazchowdhury/mongopool";
+import dbConnection from "@imtiazchowdhury/mongopool";
+import * as mongodb from "mongodb";
 import { Paginate } from "./types/types";
 declare const paginate: Paginate;
 export default paginate;
-export { dbConnection, mongoDB };
-export type { PipelineStage } from "mongoose";
+export { dbConnection, mongodb };
 export type { Document } from "mongodb";
+export type { PipelineStage } from "mongoose";
 export type * from "./types/types";

@@ -1,4 +1,5 @@
-import dbConnection, { mongoDB } from "@imtiazchowdhury/mongopool";
+import dbConnection from "@imtiazchowdhury/mongopool";
+import * as mongodb from "mongodb";
 import { Paginate, PaginatePageInfo } from "./types/types";
 
 const paginate: Paginate = async function (collection, prePagingStage, postPagingStage, options, facet, aggregateOptions) {
@@ -51,7 +52,7 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
     postPagingStage.splice(groupIndex + 1, 0, ...sortStage);
 
 
-    const facetStage: mongoDB.Document = {
+    const facetStage: mongodb.Document = {
         page: [
             {
                 $count: "totalIndex"
@@ -68,15 +69,20 @@ const paginate: Paginate = async function (collection, prePagingStage, postPagin
     aggregatePipeLine.push({ $facet: facetStage });
 
 
-    let aggregateResult: mongoDB.Document[];
+    let aggregateResult: mongodb.Document[];
 
     if (typeof collection === "string") {
         let db = await dbConnection.getDB();
         aggregateResult = await db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
-    } else if (collection instanceof mongoDB.Collection) {
+
+    } else if (typeof collection.collectionName === "string" && typeof collection.aggregate === "function") { //mongodb
         aggregateResult = await collection.aggregate(aggregatePipeLine, aggregateOptions).toArray()
-    } else {
+
+    } else if (typeof collection.aggregate === "function") { //mongoose
         aggregateResult = await collection.aggregate(aggregatePipeLine, aggregateOptions).exec()
+
+    } else {
+        throw new Error("Invalid collection type provided")
     }
 
     let result = aggregateResult[0];
@@ -117,9 +123,9 @@ export default paginate;
 
 export {
     dbConnection,
-    mongoDB
+    mongodb
 };
 
-export type {PipelineStage} from "mongoose"
-export type {Document} from "mongodb"
+export type { Document } from "mongodb";
+export type { PipelineStage } from "mongoose";
 export type * from "./types/types";

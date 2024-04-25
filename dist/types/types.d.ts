@@ -23,7 +23,7 @@
 /// <reference types="mongoose/types/virtuals" />
 /// <reference types="mongoose/types/inferschematype" />
 import { mongoDB } from "@imtiazchowdhury/mongopool";
-import mongoose, { PipelineStage } from "mongoose";
+import { PipelineStage } from "mongoose";
 export interface PaginationOptions {
     sort?: string;
     page?: number;
@@ -62,4 +62,4 @@ export interface FacetBucketQuery {
     key: string;
     query: mongoDB.Document[];
 }
-export type Paginate = (collection: string | mongoose.Model<mongoDB.Document> | mongoDB.Collection, prePagingState: PipelineStage[], postPagingStage: PipelineStage[], options: PaginationOptions, facet?: FacetBucketQuery[], aggregateOptions?: mongoDB.AggregateOptions) => Promise<PaginateResult | EmptyPaginateResult>;
+export type Paginate = (collection: any, prePagingState: PipelineStage[], postPagingStage: PipelineStage[], options: PaginationOptions, facet?: FacetBucketQuery[], aggregateOptions?: mongoDB.AggregateOptions) => Promise<PaginateResult | EmptyPaginateResult>;
