@@ -91,8 +91,6 @@ const paginate = function (collection, prePagingStage, postPagingStage, options,
         }
         aggregatePipeLine.push({ $facet: facetStage });
         let aggregateResult;
-        console.log({ mongodb });
-        console.log({ a: collection instanceof mongodb.Collection });
         if (typeof collection === "string") {
             let db = yield mongopool_1.default.getDB();
             aggregateResult = yield db.collection(collection).aggregate(aggregatePipeLine, aggregateOptions).toArray();
